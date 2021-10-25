@@ -1,0 +1,223 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2513
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 > PQ<x> := PolynomialRing(RationalField());\
+> tau := [2,3,7];\
+\
+/* Here tau is our hyperbolic triple, given as a sequence of three natural numbers. */\
+> a := tau[1];\
+> b := tau[2];\
+> c := tau[3];\
+/* Now we create the totally real field F_tau, called K here.  Here ya = 2*cos(pi/a), etc. */\
+\
+> LL := [* *];\
+> ll := [* *];\
+> n := 1; \
+> while n le 3 do\
+while> if tau[n] eq 2 then\
+while|if> K := RationalField();\
+while|if> y := 0;\
+while|if> LL := Append(LL,K);\
+while|if> ll := Append(ll,y);\
+while|if> end if;\
+while> if tau[n] eq 3 then\
+while|if> K := RationalField();\
+while|if> y := 1;\
+while|if> LL := Append(LL,K);\
+while|if> ll := Append(ll,y);\
+while|if> end if;\
+while> if tau[n] ge 4 then\
+while|if> yyy := RootOfUnity(2*tau[n]);\
+while|if> zzz := yyy + 1/yyy;\
+while|if> fff := MinimalPolynomial(zzz);\
+while|if> K<y> := NumberField(fff);\
+while|if> LL := Append(LL,K);\
+while|if> ll := Append(ll,y);\
+while|if> end if;\
+while> n +:= 1;\
+while> end while;\
+> z := ll[3];\
+> MinimalPolynomial(z);\
+x^3 - x^2 - 2*x + 1\
+> KK := Compositum(LL[1],LL[2]);\
+> K := Compositum(KK,LL[3]);\
+> ya := ll[1];\
+> yb := ll[2];\
+> yc := ll[3];\
+/* Now create the quaternion algebra B_tau, called D here */\
+> delta := ya^2 + yb^2 + yc^2 + ya*yb*yc - 4;\
+> D<i,j,k> := QuaternionAlgebra<K | ya^2 - 4, delta>;\
+/* Now create the order O_tau */\
+> alpha := ya/2 + i/2;\
+> beta := yb/2 - (ya*yb + 2*yc)/(2*ya^2 - 8)*i + k / (ya^2 - 4);\
+> gamma := alpha * beta;\
+> S := [1, alpha, beta, gamma];\
+> OD := Order(S);\
+/* Now create the (a,b,c) triangle group */\
+> GG<u,v> := Group<u,v | u^tau[1] = v^tau[2] = (u*v)^tau[3] = 1>;\
+\
+\
+/* The following function takes three arguments M, q, qq and creates a list of pairs A,B generating SL(2,q) (if qq = 1) or GL(2,q) (if qq = 2) such that the images of A,B,A*B in PSL(2,q) or PGL(2,q) have orders a,b,c, respectively.  The function generates M random pairs and outputs a list of all the A\'92s and one of all the B\'92s */ \
+\
+> FindPairs := function(M,q,qq)\
+function> if qq eq 1 then\
+function|if> H := SL(2,q);\
+function|if> end if;\
+function> if qq eq 2 then\
+function|if> H := GL(2,q);\
+function|if> end if;\
+function> m := 1;\
+function> LL := [* *];\
+function> LLL := [* *];\
+function> while m le M do\
+function|while> A := Random(H);\
+function|while> B := Random(H);\
+function|while> if ProjectiveOrder(A) eq tau[1] and ProjectiveOrder(B) eq tau[\\\
+2] and ProjectiveOrder(A*B) eq tau[3] and Index(H,sub<H|A,B>) eq 1 then\
+function|while|if> LL := Append(LL,A);\
+function|while|if> LLL := Append(LLL,B);\
+function|while|if> end if;\
+function|while> m +:= 1;\
+function|while> end while;\
+function> return LL, LLL;\
+function> end function;\
+\
+/* An example follows.  We will construct surjections of the (2,3,7) triangle group onto PSL(2,41) */\
+\
+> LL, LLL := FindPairs(1000000, 41, 1);\
+> #LL;\
+156\
+> #LLL;\
+156\
+> H := SL(2,41); \
+> N := Center(H);\
+> J,f := H/N;\
+> LL[1];\
+[27 27]\
+[17 14]\
+> LL[2];\
+[ 9 15]\
+[ 0 32]\
+> h := hom<GG -> J | f(LL[1]), f(LLL[1])>;\
+> Ker := Kernel(h);\
+> Index(GG,Ker);\
+34440\
+> S := SetToSequence(SchreierGenerators(GG,Ker));\
+> #S;\
+822\
+\
+/* Now S is a sequence of Schreier generators of the kernel of our epimorphism.  We view them as elements of the quaternion order OD, up to sign, via the embedding of Remark 2.3.  An easy but ugly way to do this is to find and replace the strings \'93u\'94 and \'93v\'94 in S by \'93alpha\'94 and \'93beta\'94 respectively.  We call the resulting sequence of quaternions SS. */\
+\
+/* Now define the matrix MM in Step 3 of Section 4.1 */\
+> MM := Matrix(K,4,4,[1, ya/2, yb/2, -yc/2, 0, 1/2, -(ya*yb/2 + yc)/(ya^2 - 4)\\\
+, -(yb + ya*yc/2)/(ya^2 - 4), 0,0,0,1/2,0,0,1/(ya^2 - 4), ya/2/(ya^2 - 4)]);\
+> MI := MM^-1;\
+\
+> OK := RingOfIntegers(K);\
+> FF := Factorization(41*OK);\
+> FF;\
+[\
+    <Prime Ideal of OK\
+    Two element generators:\
+        [41, 0, 0]\
+        [14, 1, 0], 1>,\
+    <Prime Ideal of OK\
+    Two element generators:\
+        [41, 0, 0]\
+        [30, 1, 0], 1>,\
+    <Prime Ideal of OK\
+    Two element generators:\
+        [41, 0, 0]\
+        [37, 1, 0], 1>\
+]\
+> I1 := FF[1][1];\
+> I2 := FF[2][1];\
+> I3 := FF[3][1];\
+\
+/* Given a list SS of elements of the quaternion algebra D and an ideal I of the ring of integers of K, the function CheckIdeal checks whether the elements of SS lie in the congruence subgroup \\overline\{\\Delta\}(\\tau,I), as embedded in the group of norm-1 elements of the order OD.  If it is, the output will contain \'93true true true true\'94 on each line. */\
+\
+> CheckIdeal := function(SS,I)\
+function> N := #SS;\
+function> n := 1;\
+function> while n le N do\
+function|while> ca := Matrix(K,4,1,Coordinates(SS[n] + j - j));\
+function|while> ma := MI * ca;\
+function|while> print ma[1,1] - 1 in I or ma[1,1] + 1 in I, ma[2,1] in I, ma[3\\\
+,1] in I, ma[4,1] in I;\
+function|while> n +:= 1;\
+function|while> end while;\
+function> return N;\
+function> end function;\
+\
+/* For the SS in the example above we run this test. */\
+> CheckIdeal(SS,I1);\
+false false false false\
+false false false false\
+false false false false\
+false false false false\
+true false false false\
+\
+/* We don\'92t reproduce all 822 lines of output. */\
+\
+> CheckIdeal(SS,I2);\
+false false false false\
+false false false false\
+true false false false\
+false false false false\
+false false false false\
+\
+> CheckIdeal(SS,I3);\
+true true true true\
+true true true true\
+true true true true\
+true true true true\
+true true true true\
+\
+/* All 822 lines of output look like this. Thus Ker is the congruence subgroup corresponding to the ideal I3. */\
+\
+\
+/* The following function determines the minimal trace (for the traces of absolute value higher than 2) among the quaternions in the list SS.  Here v is the distinguished embedding of K into the reals */\
+\
+> MinTrace := function(SS)\
+function> N := #SS;\
+function> ta := 0;\
+function> tv := 10^50;\
+function> n := 1;\
+function> while n le N do\
+function|while> qa := SS[n];\
+function|while> tra := Trace(qa);\
+function|while> trv := Abs(Evaluate(tra,v));\
+function|while> if trv gt 2 and trv lt tv then\
+function|while|if> ta := tra;\
+function|while|if> tv := trv;\
+function|while|if> end if;\
+function|while> n +:= 1;\
+function|while> end while;\
+function> return ta;\
+function> end function; \
+\
+/* Continuing with our example */\
+\
+> ee, eee := IsPrincipal(I3);\
+> eee;\
+[-3, -1, 3]\
+> 4*yc - 3 in I3;\
+false\
+> 3*yc + 1 in I3;\
+false\
+> yc - 4 in I3;\
+true\
+\
+/* Thus I3 is the principal ideal generated by 2 * cos(pi/7) - 4. */\
+\
+> MinTrace(SS);\
+121*y^2 + 97*y - 67\
+\
+\
+/* Our upper bound on the trace for the corresponding curve is 121 * (2 cos (pi/7))^2 + 97 * (2 cos (pi/7)) - 67, as seen in the table in Section 4.2. */\
+\
+}
